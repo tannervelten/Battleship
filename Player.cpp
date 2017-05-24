@@ -4,7 +4,6 @@
 #include "globals.h"
 #include <iostream>
 #include <string>
-#include <list>
 #include <stack>
 #include <stdlib.h>
 
@@ -575,13 +574,25 @@ void GoodPlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool 
 void GoodPlayer::addAttackPoints(Point p)
 {
     if (p.r-1 >= 0 && m_hist[p.r-1][p.c] == '.')
+    {
+        m_hist[p.r-1][p.c] = 'a';
         m_attackPoints.push(Point(p.r-1, p.c));
+    }
     if (p.r+1 <= game().rows()-1 && m_hist[p.r+1][p.c] == '.')
+    {
+        m_hist[p.r+1][p.c] = 'a';
         m_attackPoints.push(Point(p.r+1, p.c));
+    }
     if (p.c-1 >= 0 && m_hist[p.r][p.c-1] == '.')
+    {
+        m_hist[p.r][p.c-1] = 'a';
         m_attackPoints.push(Point(p.r, p.c-1));
+    }
     if (p.c+1 <= game().cols()-1 && m_hist[p.r][p.c+1] == '.')
+    {
+        m_hist[p.r][p.c+1] = 'a';
         m_attackPoints.push(Point(p.r, p.c+1));
+    }
 }
 
 //*********************************************************************
