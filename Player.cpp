@@ -5,10 +5,8 @@
 #include <iostream>
 #include <string>
 #include <list>
+#include <stack>
 #include <stdlib.h>
-
-#include <set>
-#include <unordered_set>
 
 using namespace std;
 
@@ -381,14 +379,19 @@ Point MediocrePlayer::recommendAttack()
  */
 void MediocrePlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool shipDestroyed, int shipId)
 {
+    if (shotHit)
+        m_hist[p.r][p.c] = 'X';
+    else
+        m_hist[p.r][p.c] = 'o';
+    
     if (!validShot)
         cerr << "Error MediocrePlayer::recordAttackResult -- computer should not be shooting invalid shots" << endl;
     if (m_state == 1)
     {
-        if (shotHit)
-            m_hist[p.r][p.c] = 'X';
-        else
-            m_hist[p.r][p.c] = 'o';
+//        if (shotHit)
+//            m_hist[p.r][p.c] = 'X';
+//        else
+//            m_hist[p.r][p.c] = 'o';
         
         if (shotHit && !shipDestroyed)
         {
@@ -399,13 +402,13 @@ void MediocrePlayer::recordAttackResult(Point p, bool validShot, bool shotHit, b
     }
     else // state 2
     {
-        if (shotHit)
-            m_hist[p.r][p.c] = 'X';
-        else
-            m_hist[p.r][p.c] = 'o';
+//        if (shotHit)
+//            m_hist[p.r][p.c] = 'X';
+//        else
+//            m_hist[p.r][p.c] = 'o';
         
         if (shotHit && shipDestroyed)
-            m_state = 2;
+            m_state = 1;
     }
 }
 
@@ -466,26 +469,38 @@ public:
     
     // Other
     virtual bool placeShips(Board& b);
-    virtual bool auxPlaceShips(Board& b, int shipsLeft, int id, bool backTrack, bool simple, vector<Point> added, vector<Direction> dirs) { return true; }
-    virtual Point recommendAttack() { return Point(0,0); }
-    virtual void recordAttackResult(Point p, bool validShot, bool shotHit, bool shipDestroyed, int shipId) {}
+    virtual Point recommendAttack();
+    virtual void recordAttackResult(Point p, bool validShot, bool shotHit, bool shipDestroyed, int shipId);
     virtual void recordAttackByOpponent(Point p) { /* do nothing */ }
+    
+    void addAttackPoints(Point p);
     
 private:
     vector<Point> m_points;
+    int m_state;
+    stack<Point> m_attackPoints;
+    vector<vector<char> > m_hist;
 };
 
 GoodPlayer::GoodPlayer(string nm, const Game& g)
-: Player(nm, g)
+: Player(nm, g), m_state(1)
 {
+    m_hist.resize(game().rows());
     for (int r = 0; r < game().rows(); r++)
+    {
+        m_hist[r].resize(game().cols());
         for (int c = 0; c < game().cols(); c++)
+        {
             m_points.push_back(Point(r,c));
+            m_hist[r][c] = '.';
+        }
+    }
 }
 
 bool GoodPlayer::placeShips(Board& b)
 {
     int id = 0;
+    Direction dir;
     bool valid;
     int shipsLeft = game().nShips();
     while (shipsLeft > 0)
@@ -502,31 +517,72 @@ bool GoodPlayer::placeShips(Board& b)
             id++;
         }
     }
+    m_points.clear();
+    for (int r = 0; r < game().rows(); r++)
+        for (int c = 0; c < game().cols(); c++)
+            m_points.push_back(Point(r,c));
     return true;
 }
 
-//bool GoodPlayer::auxPlaceShips(Board& b, int shipsLeft, int id, bool backTrack, bool simple, vector<Point> added, vector<Direction> dirs)
-//{
-//    bool valid = false;
-//    if (shipsLeft == 0) return true;
-//    if (added.empty() && backTrack) return false;
-//    if (!backTrack)
-//    {
-//        while (!valid)
-//        {
-//            int i = randInt(m_points.size());
-//            Point p(m_points[i].r, m_points[i].c);
-//            valid = b.placeShip(p, id, HORIZONTAL);
-//            if (!valid)
-//                valid = b.placeShip(p, id, VERTICAL);
-//        }
-//    }
-//    else
-//    {
-//        
-//    }
-//    return false;
-//}
+Point GoodPlayer::recommendAttack()
+{
+    if (m_state == 1)
+    {
+        // Randomly select point from points
+        int i = randInt(m_points.size());
+        Point p(m_points[i].r, m_points[i].c);
+        removePoint(p, m_points);
+        return p;
+    }
+    else // m_state == 2
+    {
+        Point attack;
+        if (!m_attackPoints.empty())
+            attack = m_attackPoints.top();
+        else
+            cerr << "Error GoodPlayer::reccomendAttack -- stack should not be empty" << endl;
+        m_attackPoints.pop();
+        removePoint(attack, m_points);
+        return attack;
+    }
+    return Point(0,0);
+}
+
+void GoodPlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool shipDestroyed, int shipId)
+{
+    if (!validShot)
+        cerr << "Error GoodPlayer::recordAttackResult -- computer should not be shooting invalid shots" << endl;
+    
+    if (shotHit)
+    {
+        m_hist[p.r][p.c] = 'X';
+        addAttackPoints(p);
+    }
+    else
+        m_hist[p.r][p.c] = 'o';
+    
+    if (m_state == 1)
+    {
+        if (shotHit) m_state = 2;
+    }
+    else // m_state == 2
+    {
+        if (m_attackPoints.empty())
+            m_state = 1;
+    }
+}
+
+void GoodPlayer::addAttackPoints(Point p)
+{
+    if (p.r-1 >= 0 && m_hist[p.r-1][p.c] == '.')
+        m_attackPoints.push(Point(p.r-1, p.c));
+    if (p.r+1 <= game().rows()-1 && m_hist[p.r+1][p.c] == '.')
+        m_attackPoints.push(Point(p.r+1, p.c));
+    if (p.c-1 >= 0 && m_hist[p.r][p.c-1] == '.')
+        m_attackPoints.push(Point(p.r, p.c-1));
+    if (p.c+1 <= game().cols()-1 && m_hist[p.r][p.c+1] == '.')
+        m_attackPoints.push(Point(p.r, p.c+1));
+}
 
 //*********************************************************************
 //  createPlayer
