@@ -108,60 +108,63 @@ Player* GameImpl::play(Player* p1, Player* p2, Board& b1, Board& b2, bool should
     }
     if (!p1->placeShips(b1)) return nullptr;
     if (!p2->placeShips(b2)) return nullptr;
+    b1.display(false);
     
-    while (!b1.allShipsDestroyed() && !b2.allShipsDestroyed())
-    {
-        bool shotHit = false, shipDestroyed = false, validShot = false;
-        int shipId = 100;
-        if (p1Turn)
-        {
-            t1 = p1;
-            t2 = p2;
-            b = &b2;
-            human = p1->isHuman();
-        }
-        else
-        {
-            t1 = p2;
-            t2 = p1;
-            b = &b1;
-            human = p2->isHuman();
-        }
-        cout << t1->name() << "'s turn. Board for " << t2->name() << ":" << endl;
-        b->display(human);
-        Point attackCoord = t1->recommendAttack();
-        validShot = b->attack(attackCoord, shotHit, shipDestroyed, shipId);
-        t1->recordAttackResult(attackCoord, validShot, shotHit, shipDestroyed, shipId);
-        if (human && shipId == -1)
-            cout << t1->name() << " wasted a shot at (" << attackCoord.r << "," << attackCoord.c << ")." << endl;
-        else
-        {
-            cout << t1->name() << " attacked (" << attackCoord.r << "," << attackCoord.c << ") and ";
-            if (shotHit && shipDestroyed)
-                cout << "destroyed the " << this->shipName(shipId);
-            else if (shotHit)
-                cout << "hit something";
-            else
-                cout << "missed";
-            cout << ", resulting in:" << endl;
-            b->display(human);
-        }
-        p1Turn = !p1Turn;
-        
-        if (b1.allShipsDestroyed() || b2.allShipsDestroyed())
-            break;
-        if (shouldPause)
-            waitForEnter();
-    }
-
-    if (b1.allShipsDestroyed())
-        t1 = p2;
-    else
-        t1 = p1;
+    return nullptr;
     
-    cout << t1->name() << " wins!" << endl;
-    
-    return t1;
+//    while (!b1.allShipsDestroyed() && !b2.allShipsDestroyed())
+//    {
+//        bool shotHit = false, shipDestroyed = false, validShot = false;
+//        int shipId = 100;
+//        if (p1Turn)
+//        {
+//            t1 = p1;
+//            t2 = p2;
+//            b = &b2;
+//            human = p1->isHuman();
+//        }
+//        else
+//        {
+//            t1 = p2;
+//            t2 = p1;
+//            b = &b1;
+//            human = p2->isHuman();
+//        }
+//        cout << t1->name() << "'s turn. Board for " << t2->name() << ":" << endl;
+//        b->display(human);
+//        Point attackCoord = t1->recommendAttack();
+//        validShot = b->attack(attackCoord, shotHit, shipDestroyed, shipId);
+//        t1->recordAttackResult(attackCoord, validShot, shotHit, shipDestroyed, shipId);
+//        if (human && shipId == -1)
+//            cout << t1->name() << " wasted a shot at (" << attackCoord.r << "," << attackCoord.c << ")." << endl;
+//        else
+//        {
+//            cout << t1->name() << " attacked (" << attackCoord.r << "," << attackCoord.c << ") and ";
+//            if (shotHit && shipDestroyed)
+//                cout << "destroyed the " << this->shipName(shipId);
+//            else if (shotHit)
+//                cout << "hit something";
+//            else
+//                cout << "missed";
+//            cout << ", resulting in:" << endl;
+//            b->display(human);
+//        }
+//        p1Turn = !p1Turn;
+//        
+//        if (b1.allShipsDestroyed() || b2.allShipsDestroyed())
+//            break;
+//        if (shouldPause)
+//            waitForEnter();
+//    }
+//
+//    if (b1.allShipsDestroyed())
+//        t1 = p2;
+//    else
+//        t1 = p1;
+//    
+//    cout << t1->name() << " wins!" << endl;
+//    
+//    return t1;
 }
 
 //******************** Game functions *******************************

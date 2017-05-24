@@ -4,9 +4,14 @@
 #include "globals.h"
 #include <iostream>
 #include <string>
+#include <list>
 #include <stdlib.h>
 
+#include <set>
+#include <unordered_set>
+
 using namespace std;
+
 /**
     Remove a specified point from a vector of points
  
@@ -203,12 +208,12 @@ public:
     
     // Other
     virtual bool placeShips(Board& b);
-    virtual bool auxPlaceShips(Board& b, int shipsLeft, int r, int c, int id, bool backTrack, vector<Point> added, vector<Direction> dirs);
     virtual Point recommendAttack();
     virtual void recordAttackResult(Point p, bool validShot, bool shotHit, bool shipDestroyed, int shipId);
     virtual void recordAttackByOpponent(Point p) { /* do nothing */ }
     
     // Helper functions
+    bool auxPlaceShips(Board& b, int shipsLeft, int r, int c, int id, bool backTrack, vector<Point> added, vector<Direction> dirs);
     Point calculateShot();
     void buildCalculatedPoints(Point p);
     
@@ -414,7 +419,7 @@ Point MediocrePlayer::calculateShot()
 {
     if (buildCPoints)
         buildCalculatedPoints(m_lastCellHit);
-    unsigned long i = randInt(m_calculatedPoints.size());
+    int i = randInt(m_calculatedPoints.size());
     Point r(m_calculatedPoints[i].r, m_calculatedPoints[i].c);
     removePoint(r, m_calculatedPoints);
     if (m_calculatedPoints.empty())
@@ -450,9 +455,78 @@ void MediocrePlayer::buildCalculatedPoints(Point p)
 //  GoodPlayer
 //*********************************************************************
 
-// TODO:  You need to replace this with a real class declaration and
-//        implementation.
-typedef AwfulPlayer GoodPlayer;
+class GoodPlayer : public Player
+{
+public:
+    // Constructor
+    GoodPlayer(string nm, const Game& g);
+    
+    // Destructor
+    ~GoodPlayer() {}
+    
+    // Other
+    virtual bool placeShips(Board& b);
+    virtual bool auxPlaceShips(Board& b, int shipsLeft, int id, bool backTrack, bool simple, vector<Point> added, vector<Direction> dirs) { return true; }
+    virtual Point recommendAttack() { return Point(0,0); }
+    virtual void recordAttackResult(Point p, bool validShot, bool shotHit, bool shipDestroyed, int shipId) {}
+    virtual void recordAttackByOpponent(Point p) { /* do nothing */ }
+    
+private:
+    vector<Point> m_points;
+};
+
+GoodPlayer::GoodPlayer(string nm, const Game& g)
+: Player(nm, g)
+{
+    for (int r = 0; r < game().rows(); r++)
+        for (int c = 0; c < game().cols(); c++)
+            m_points.push_back(Point(r,c));
+}
+
+bool GoodPlayer::placeShips(Board& b)
+{
+    int id = 0;
+    bool valid;
+    int shipsLeft = game().nShips();
+    while (shipsLeft > 0)
+    {
+        int i = randInt(m_points.size());
+        Point p(m_points[i].r, m_points[i].c);
+        valid = b.placeShip(p, id, HORIZONTAL);
+        if (!valid)
+            valid = b.placeShip(p, id, VERTICAL);
+        if (valid)
+        {
+            removePoint(p, m_points);
+            shipsLeft--;
+            id++;
+        }
+    }
+    return true;
+}
+
+//bool GoodPlayer::auxPlaceShips(Board& b, int shipsLeft, int id, bool backTrack, bool simple, vector<Point> added, vector<Direction> dirs)
+//{
+//    bool valid = false;
+//    if (shipsLeft == 0) return true;
+//    if (added.empty() && backTrack) return false;
+//    if (!backTrack)
+//    {
+//        while (!valid)
+//        {
+//            int i = randInt(m_points.size());
+//            Point p(m_points[i].r, m_points[i].c);
+//            valid = b.placeShip(p, id, HORIZONTAL);
+//            if (!valid)
+//                valid = b.placeShip(p, id, VERTICAL);
+//        }
+//    }
+//    else
+//    {
+//        
+//    }
+//    return false;
+//}
 
 //*********************************************************************
 //  createPlayer

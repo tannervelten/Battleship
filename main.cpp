@@ -25,13 +25,13 @@ bool addStandardShips(Game& g)
 
 int main()
 {
-    Game g(5, 5);
-    g.addShip(5, 'A', "aircraft carrier");
-    g.addShip(2, 'L', "latrol boat");
-    g.addShip(3, 'S', "submarine");
-//    addStandardShips(g);
-    Player* p1 = createPlayer("mediocre", "Conman", g);
-    Player* p2 = createPlayer("human", "Tanman", g);
+    Game g(10, 10);
+//    g.addShip(5, 'A', "aircraft carrier");
+//    g.addShip(2, 'L', "latrol boat");
+//    g.addShip(3, 'S', "submarine");
+    addStandardShips(g);
+    Player* p1 = createPlayer("good", "Conman", g);
+    Player* p2 = createPlayer("mediocre", "Tanman", g);
     if (g.play(p1, p2, false) == nullptr) cout << "worked" << endl;
     delete p1;
     delete p2;
