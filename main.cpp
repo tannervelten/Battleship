@@ -58,10 +58,10 @@ int main()
     {
         Game g(2, 3);
         g.addShip(2, 'R', "rowboat");
-        Player* p1 = createPlayer("mediocre", "Popeye", g);
+        Player* p1 = createPlayer("good", "Popeye", g);
         Player* p2 = createPlayer("mediocre", "Bluto", g);
         cout << "This mini-game has one ship, a 2-segment rowboat." << endl;
-        g.play(p1, p2);
+        g.play(p1, p2, false);
         delete p1;
         delete p2;
     }
@@ -83,8 +83,10 @@ int main()
         {
             cout << "============================= Game " << k
             << " =============================" << endl;
-            Game g(10, 10);
-            addStandardShips(g);
+            Game g(2, 3);
+            g.addShip(2, 'R', "rowboat");
+//            Game g(10, 10);
+//            addStandardShips(g);
             Player* p1 = createPlayer("good", "Good Audrey", g);
             Player* p2 = createPlayer("mediocre", "Mediocre Mimi", g);
             Player* winner = (k % 2 == 1 ?

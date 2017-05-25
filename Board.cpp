@@ -116,39 +116,51 @@ void BoardImpl::unblock()
  */
 bool BoardImpl::placeShip(Point topOrLeft, int shipId, Direction dir)
 {
+    // If shipId is not valid return false
     if (shipId < 0 || shipId > m_game.nShips() - 1)
         return false;
+    // If point is out of bounds return false
     if (topOrLeft.r < 0 || topOrLeft.r > m_game.rows() - 1 || topOrLeft.c < 0 || topOrLeft.c > m_game.cols() - 1)
         return false;
+    // If ship is already in play return false
     if (m_shipsInPlay.find(shipId) != m_shipsInPlay.end())
         return false;
     int len = m_game.shipLength(shipId);
+    // Horizontal placement
     if (dir == HORIZONTAL)
     {
         Point left = topOrLeft;
+        // Check length to make sure ship fits
         if (left.c + len > m_game.cols())
             return false;
         for (int i = 0; i < len; i++)
         {
+            // If slot for ship is not empty return false
             if (m_board[left.r][left.c+i] != '.')
                 return false;
         }
+        // Place ship on board
         for (int i = 0; i < len; i++)
             m_board[left.r][left.c+i] = shipId+'0';
     }
+    // Vertical placement
     else // dir == VERTICAL
     {
         Point top = topOrLeft;
+        // Check length to make sure ship fits
         if (top.r + len > m_game.rows())
             return false;
         for (int i = 0; i < len; i++)
         {
+            // If slot for ship is not empty return false
             if (m_board[top.r+i][top.c] != '.')
                 return false;
         }
+        // Place ship on board
         for (int i = 0; i < len; i++)
             m_board[top.r+i][top.c] = shipId+'0';
     }
+    // Add to ships in play and return true
     m_shipsInPlay.insert(make_pair(shipId, m_game.shipLength(shipId)));
     return true;
 }
@@ -162,39 +174,51 @@ bool BoardImpl::placeShip(Point topOrLeft, int shipId, Direction dir)
  */
 bool BoardImpl::unplaceShip(Point topOrLeft, int shipId, Direction dir)
 {
+    // If shipId is not valid return false
     if (shipId < 0 || shipId > m_game.nShips() - 1)
         return false;
+    // If out of bounds return false
     if (dir == VERTICAL && topOrLeft.r + m_game.shipLength(shipId) > m_game.rows())
         return false;
+    // If out of bounds return false
     if (dir == HORIZONTAL && topOrLeft.c + m_game.shipLength(shipId) > m_game.cols())
         return false;
+    // If out of bounds return false
     if (topOrLeft.r < 0 || topOrLeft.r > m_game.rows() - 1 || topOrLeft.c < 0 || topOrLeft.c > m_game.cols() - 1)
         return false;
+    // If ship is not in play return false
     if (m_shipsInPlay.find(shipId) == m_shipsInPlay.end())
         return false;
     int len = m_game.shipLength(shipId);
+    // Direction is horizontal
     if (dir == HORIZONTAL)
     {
         Point left = topOrLeft;
         for (int i = 0; i < len; i++)
         {
+            // If slot does not equal the shipId return false
             if (m_board[left.r][left.c+i]-48 != shipId)
                 return false;
         }
+        // Remove ship from board
         for (int i = 0; i < len; i++)
             m_board[left.r][left.c+i] = '.';
     }
+    // Direction is vertical
     else // dir == VERTICAL
     {
         Point top = topOrLeft;
         for (int i = 0; i < len; i++)
         {
+            // If slot does not equal shipId return false
             if (m_board[top.r+i][top.c]-48 != shipId)
                 return false;
         }
+        // Remove ship from board
         for (int i = 0; i < len; i++)
             m_board[top.r+i][top.c] = '.';
     }
+    // Erase ship from ships in play and return true
     m_shipsInPlay.erase(shipId);
     return true;
 }
@@ -242,35 +266,45 @@ void BoardImpl::display(bool shotsOnly) const
  */
 bool BoardImpl::attack(Point p, bool& shotHit, bool& shipDestroyed, int& shipId)
 {
+    // If shot is out of bounds return false
     if (p.r < 0 || p.r > m_game.rows() || p.c < 0 || p.c > m_game.rows())
     {
         // Used to let Game::play() know user wasted shot
         shipId = -1;
         return false;
     }
+    
+    // If cell already shot return false
     if (m_board[p.r][p.c] == 'o' || m_board[p.r][p.c] == 'X')
     {
         shipId = -1;
         return false;
     }
+    // If cell is empty mark with missed
     else if (m_board[p.r][p.c] == '.')
     {
         shotHit = false;
         shipDestroyed = false;
         m_board[p.r][p.c] = 'o';
     }
-    else // hit a ship
+    // Hit a ship
+    else
     {
+        // Set variables to shipId and mark board as hit
         shotHit = true;
         shipId = m_board[p.r][p.c]-48;
         m_board[p.r][p.c] = 'X';
+        // Decrement ships health
         m_shipsInPlay[shipId]--;
+        // If the ships health is zero shipDestroyed is true
         if (m_shipsInPlay[shipId] == 0)
         {
             shipDestroyed = true;
+            // Erase ship from ships in play
             m_shipsInPlay.erase(shipId);
         }
     }
+    // Return true
     return true;
 }
 

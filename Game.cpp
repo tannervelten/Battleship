@@ -63,7 +63,6 @@ private:
  */
 GameImpl::~GameImpl()
 {
-//    cout << "logout\nSaving session...\n...copying shared history...\n...saving history...truncating history files...\n...completed.\nDeleting expired sessions...none found.\n";
     for (auto d : m_ships)
         delete d;
 }
@@ -78,7 +77,6 @@ GameImpl::~GameImpl()
  */
 bool GameImpl::addShip(int length, char symbol, string name)
 {
-    // KEEP AN EYE OUT HERE FOR POTENTIAL BUG
     Ship* new_ship = new Ship(m_nShips++, length, symbol, name);
     m_ships.push_back(new_ship);
     return true;
@@ -96,23 +94,31 @@ bool GameImpl::addShip(int length, char symbol, string name)
  */
 Player* GameImpl::play(Player* p1, Player* p2, Board& b1, Board& b2, bool shouldPause)
 {
+    // Player points and board pointer
     Player *t1, *t2;
     Board* b;
+    // P1s turn is first
     bool p1Turn = true;
     bool human;
     
+    // Check to make sure both players are not human
     if (p1->isHuman() && p2->isHuman())
     {
         cout << "This game does not support 2-player." << endl;
         return nullptr;
     }
+    // If ships cannot be placed return nullptr
     if (!p1->placeShips(b1)) return nullptr;
     if (!p2->placeShips(b2)) return nullptr;
     
+    // Play game until one of the players ships are destroyed
     while (!b1.allShipsDestroyed() && !b2.allShipsDestroyed())
     {
+        // Set booleans to false
         bool shotHit = false, shipDestroyed = false, validShot = false;
+        // Garbage value
         int shipId = 100;
+        // Set pointer variables depending on whos turn it is
         if (p1Turn)
         {
             t1 = p1;
@@ -127,15 +133,23 @@ Player* GameImpl::play(Player* p1, Player* p2, Board& b1, Board& b2, bool should
             b = &b1;
             human = p2->isHuman();
         }
+        // Display board
         cout << t1->name() << "'s turn. Board for " << t2->name() << ":" << endl;
         b->display(human);
+        // Get attack from player
         Point attackCoord = t1->recommendAttack();
+        // Attack and set validShot to result
         validShot = b->attack(attackCoord, shotHit, shipDestroyed, shipId);
+        // Record the attack result
         t1->recordAttackResult(attackCoord, validShot, shotHit, shipDestroyed, shipId);
+        // If human and shot was invalid print special message
+        // Computers cannot waste shots
         if (human && shipId == -1)
             cout << t1->name() << " wasted a shot at (" << attackCoord.r << "," << attackCoord.c << ")." << endl;
+        // Shot is valid
         else
         {
+            // Display message depending on result of attack
             cout << t1->name() << " attacked (" << attackCoord.r << "," << attackCoord.c << ") and ";
             if (shotHit && shipDestroyed)
                 cout << "destroyed the " << this->shipName(shipId);
@@ -144,23 +158,28 @@ Player* GameImpl::play(Player* p1, Player* p2, Board& b1, Board& b2, bool should
             else
                 cout << "missed";
             cout << ", resulting in:" << endl;
+            // Display results -- board displayed depends on whether the player is a human or not
             b->display(human);
         }
+        // Switch turn to P2
         p1Turn = !p1Turn;
         
+        // If one of the player's ships are destroyed break loop
         if (b1.allShipsDestroyed() || b2.allShipsDestroyed())
             break;
+        // If pause parameter is true waitForEnter after each turn
         if (shouldPause)
             waitForEnter();
     }
 
+    // Set t1 to the winnder
     if (b1.allShipsDestroyed())
         t1 = p2;
     else
         t1 = p1;
     
+    // Output name and return winner
     cout << t1->name() << " wins!" << endl;
-    
     return t1;
 }
 

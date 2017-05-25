@@ -133,6 +133,7 @@ bool HumanPlayer::placeShips(Board& b)
     bool valid = false;
     int r = -1, c = -1;
     Direction dir = HORIZONTAL;
+    // Continue prompting user until all ships are placed
     for (int i = 0; i < game().nShips(); i++)
     {
         cout << Player::name() << " must place " << game().nShips()-i << " ship";
@@ -142,6 +143,7 @@ bool HumanPlayer::placeShips(Board& b)
             cout << ".";
         cout << endl;
         b.display(false);
+        // Prompt user for direction until valid
         while (!valid)
         {
             cout << "Enter h or v for direction of " << game().shipName(i) << " (length " << game().shipLength(i) << "): ";
@@ -150,11 +152,13 @@ bool HumanPlayer::placeShips(Board& b)
                 cout << "Direction must be h or v." << endl;
             else
                 valid = true;
+            // Clear buffer
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
         valid = false;
         if (d == "v")
             dir = VERTICAL;
+        // Prompt user for point of placement until valid
         while (!valid)
         {
             cout << "Enter row and column of ";
@@ -168,6 +172,7 @@ bool HumanPlayer::placeShips(Board& b)
                 cout << "The ship cannot be placed there." << endl;
             else
                 valid = true;
+            // Clear buffer
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
         valid = false;
@@ -262,10 +267,13 @@ bool MediocrePlayer::placeShips(Board& b)
 {
     bool valid = false;
     int counter = 0;
+    // Attempt to place ships 50 times
     while (!valid && counter < 50)
     {
+        // Block ~50% of board before placement
         b.block();
         valid = auxPlaceShips(b, game().nShips(), 0, 0, 0, false, {}, {});
+        // Unblock board after attempting to place
         b.unblock();
         counter++;
     }
@@ -292,48 +300,76 @@ bool MediocrePlayer::placeShips(Board& b)
  */
 bool MediocrePlayer::auxPlaceShips(Board& b, int shipsLeft, int r, int c, int id, bool backTrack, vector<Point> added, vector<Direction> dirs)
 {
+    // Set to true if ship is placed false otherwise
     bool valid;
     
+    // Base Case 1: If all ships placed our job is done
     if (shipsLeft == 0) return true;
+    // If c exceeds game columns set it to 0 and increment row count
     if (c > game().cols()-1)
     {
         c = 0;
         r++;
     }
+    // Base Case 2: If r exceeds game rows start backtracking
     if (r > game().rows()-1 && c == 0) backTrack = true;
+    // Base Case 3: If no ships in added and backtrack is true return false -- no viable arrangment for ships
     if (added.size() == 0 && backTrack) return false;
     
+    // If not backtracking
     if (!backTrack)
     {
+        // Attempt to place ship horizontally
         valid = b.placeShip(Point(r, c), id, HORIZONTAL);
+        // If successfully placed horizontally
         if (valid)
         {
+            // Add point of placement
             added.push_back(Point(r,c));
+            // Add direction or placedment
             dirs.push_back(HORIZONTAL);
+            // Recursively call with adjusted parameters
             return auxPlaceShips(b, shipsLeft-1, 0, 0, id+1, backTrack, added, dirs);
         }
+        // Cannot place ship horizontally
         else
         {
+            // Attempt to place ship vertically
             valid = b.placeShip(Point(r, c), id, VERTICAL);
+            // If successfully placed vertically
             if (valid)
             {
+                // Add points of placement
                 added.push_back(Point(r,c));
+                // Add direction of placement
                 dirs.push_back(VERTICAL);
+                // Recursively call with adjusted parameters
                 return auxPlaceShips(b, shipsLeft-1, 0, 0, id+1, backTrack, added, dirs);
             }
+            // Not able to place horizontally or vertically
             else
+            {
+                // Recursively call with updated parameters -- only increment column
                 return auxPlaceShips(b, shipsLeft, r, c+1, id, backTrack, added, dirs);
+            }
         }
     }
     else // backtracking
     {
+        // Get row and column of last added ship
         r = added.back().r;
         c = added.back().c;
+        // Get direction of last added ship
         Direction dir = dirs.back();
+        // Remove ship from added
         added.pop_back();
+        // Remove direciton from added
         dirs.pop_back();
+        // Unplace ship
         valid = b.unplaceShip(Point(r, c), id-1, dir);
+        // No longer backtracking
         backTrack = false;
+        // Recursively call with updated parameters -- increment shipsLeft, columns, decrement id
         return auxPlaceShips(b, shipsLeft+1, r, c+1, id-1, backTrack, added, dirs);
     }
 }
@@ -349,8 +385,10 @@ bool MediocrePlayer::auxPlaceShips(Board& b, int shipsLeft, int r, int c, int id
  */
 Point MediocrePlayer::recommendAttack()
 {
+    // m_points should not be empty
     if (m_points.empty())
         cerr << "Error MediocrePlayer::recommendAttack() -- someone should have one" << endl;
+    // Randomly select point on board to shoot
     if (m_state == 1)
     {
         // Randomly select point from points
@@ -359,6 +397,7 @@ Point MediocrePlayer::recommendAttack()
         removePoint(p, m_points);
         return p;
     }
+    // Select point randomly from calculated points
     else // state 2
     {
         Point p = calculateShot();
@@ -378,6 +417,7 @@ Point MediocrePlayer::recommendAttack()
  */
 void MediocrePlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool shipDestroyed, int shipId)
 {
+    // If shot hit mark it in players data members
     if (shotHit)
         m_hist[p.r][p.c] = 'X';
     else
@@ -385,6 +425,8 @@ void MediocrePlayer::recordAttackResult(Point p, bool validShot, bool shotHit, b
     
     if (!validShot)
         cerr << "Error MediocrePlayer::recordAttackResult -- computer should not be shooting invalid shots" << endl;
+    
+    // Switch to state 2 if shot hit but ship was not destroyed
     if (m_state == 1)
     {
 //        if (shotHit)
@@ -399,6 +441,7 @@ void MediocrePlayer::recordAttackResult(Point p, bool validShot, bool shotHit, b
             buildCPoints = true;
         }
     }
+    // Switch to state 1 if shot hit and ship was destroyed
     else // state 2
     {
 //        if (shotHit)
@@ -436,7 +479,9 @@ Point MediocrePlayer::calculateShot()
  */
 void MediocrePlayer::buildCalculatedPoints(Point p)
 {
+    // Clear old points before adding new ones
     m_calculatedPoints.clear();
+    // Check points for validity and add them to vector
     for (int d = 1; d < 5; d++)
     {
         if (p.r-d >= 0 && m_hist[p.r-d][p.c] == '.')
@@ -472,15 +517,25 @@ public:
     virtual void recordAttackResult(Point p, bool validShot, bool shotHit, bool shipDestroyed, int shipId);
     virtual void recordAttackByOpponent(Point p) { /* do nothing */ }
     
+    // Helpers
     void addAttackPoints(Point p);
     
 private:
+    // Stores points left on the board
     vector<Point> m_points;
+    // State of the player -- randomly firing and shooting surrounding cells
     int m_state;
+    // Stack storing the points surrounding a hit attack
     stack<Point> m_attackPoints;
+    // Stores history of shots -- misses and hits
     vector<vector<char> > m_hist;
 };
 
+/** 
+    GoodPlayer Constructor
+ 
+    Initializes m_hist to empty board and m_points with all points on the board
+ */
 GoodPlayer::GoodPlayer(string nm, const Game& g)
 : Player(nm, g), m_state(1)
 {
@@ -496,6 +551,11 @@ GoodPlayer::GoodPlayer(string nm, const Game& g)
     }
 }
 
+/**
+    placeShips for Good Player
+ 
+    @param1 b The board to place ships on
+ */
 bool GoodPlayer::placeShips(Board& b)
 {
     int id = 0;
@@ -516,6 +576,7 @@ bool GoodPlayer::placeShips(Board& b)
             id++;
         }
     }
+    // Once ships are placed clear points and reinitiate them for attacking phase
     m_points.clear();
     for (int r = 0; r < game().rows(); r++)
         for (int c = 0; c < game().cols(); c++)
@@ -523,47 +584,71 @@ bool GoodPlayer::placeShips(Board& b)
     return true;
 }
 
+/**
+    recommendAttack for Good Player
+ 
+    If m_state == 1 selects a random point left on the board to attack
+    If m_state == 2 selects point from stack to attack
+ */
 Point GoodPlayer::recommendAttack()
 {
+    // Randomly select one of the points left
     if (m_state == 1)
     {
         // Randomly select point from points
         int i = randInt(m_points.size());
         Point p(m_points[i].r, m_points[i].c);
+        // Remove the selected point from points remaining
         removePoint(p, m_points);
         return p;
     }
+    // Attack the next point on the stack
     else // m_state == 2
     {
         Point attack;
         if (!m_attackPoints.empty())
             attack = m_attackPoints.top();
+        // Make sure stack is not empty
         else
             cerr << "Error GoodPlayer::reccomendAttack -- stack should not be empty" << endl;
         m_attackPoints.pop();
+        // Remove the selected point from points remaining
         removePoint(attack, m_points);
         return attack;
     }
-    return Point(0,0);
 }
 
+/**
+    recordAttackResult for Good Player
+ 
+    @param1 p The point last attacked
+    @param2 validShot True if the last attack is valid
+    @param3 shotHit True if the last attack hit a ship
+    @param4 shipDestroyed True if the last attack destroyed a ship
+    @param5 shipId Id of the ship last hit
+ */
 void GoodPlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool shipDestroyed, int shipId)
 {
+    // Check if shot was valid
     if (!validShot)
         cerr << "Error GoodPlayer::recordAttackResult -- computer should not be shooting invalid shots" << endl;
     
+    // If shot hit mark it and add to the stack
     if (shotHit)
     {
         m_hist[p.r][p.c] = 'X';
         addAttackPoints(p);
     }
+    // Mark if shot did not hit
     else
         m_hist[p.r][p.c] = 'o';
     
+    // Switch to state 2 if shot hit
     if (m_state == 1)
     {
         if (shotHit) m_state = 2;
     }
+    // Switch to state 1 if stack is empty
     else // m_state == 2
     {
         if (m_attackPoints.empty())
@@ -571,23 +656,33 @@ void GoodPlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool 
     }
 }
 
+/**
+    Adds attack points to stack for Good Player
+ 
+    @param1 p The point last attacked
+    When a shot hits the four surrounding cells are added to the stack to attack next
+ */
 void GoodPlayer::addAttackPoints(Point p)
 {
+    // If cell above p is valid add it to the stack
     if (p.r-1 >= 0 && m_hist[p.r-1][p.c] == '.')
     {
         m_hist[p.r-1][p.c] = 'a';
         m_attackPoints.push(Point(p.r-1, p.c));
     }
+    // If cell below p is valid add it to the stack
     if (p.r+1 <= game().rows()-1 && m_hist[p.r+1][p.c] == '.')
     {
         m_hist[p.r+1][p.c] = 'a';
         m_attackPoints.push(Point(p.r+1, p.c));
     }
+    // If cell to the left of p is valid add it to the stack
     if (p.c-1 >= 0 && m_hist[p.r][p.c-1] == '.')
     {
         m_hist[p.r][p.c-1] = 'a';
         m_attackPoints.push(Point(p.r, p.c-1));
     }
+    // If cell to the right of p is valid add it to the stack
     if (p.c+1 <= game().cols()-1 && m_hist[p.r][p.c+1] == '.')
     {
         m_hist[p.r][p.c+1] = 'a';
