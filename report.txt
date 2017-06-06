@@ -1,0 +1,114 @@
+Project 3 Report
+Tanner Velten
+204 490 046
+
+a.
+The board is represented using a 2D vector for both players. This data structure makes it easy to access the correct part of the board and change it to the proper value. Additionally, each player has their own private m_hist which is essentially a copy of the board containing their own hits and misses. The m_hist 2D vector representation is used to record shots and updates after each turn.
+
+Vectors are largely used throughout the project due to their indexing attribute which makes it quick and easy to access elements. The downside to this choice is that the erase function is very costly to perform. However, since the data being stored is not that great, the ease of use from indexing is worth the cost of erasing elements. An alternative to vectors could potentially be lists. However, this implementation would trade constant time erasing for increased complexity and indexing.
+
+The map data structure is used to store the ships in play within the Board class. The keys being the shipId and the values being the ships health. By using a map, ships are instantly accessible and the health of each ship can be decremented very easily. Additionally, once a ships health reaches zero, it can quickly be removed from the ships in play. Once the map is found to be empty, the program then knows that there is a winner.
+
+The stack data structure is used for the Good Player's recommend attacks. It stores the points needed to be attacked. This allows the player to know which cells to attack in order to sink a ship. Whenever a hit is made, the surrounding cells are added to the stack, and attacked in order.
+
+b.
+The Good Player chooses a random point on the board and a random direction. It then attempts to place it and if the placement is not possible, then it will remove the point from remaining choices and find another random point.
+
+The Good Player attacks depending on which state it is in. The first state it chooses points randomly from the points remaining. The second state is when a point hits causing the player to add the surrounding points to a stack. The player will pop points off the stack and attack them until the stack is empty causing the player to switch back to the first state.
+
+c.
+MediocrePlayer::placeShips
+// Initialize valid and counter
+// While !valid and counter < 50
+  // Block half of the board
+  // Call and set valid to auxPlaceShips
+  // Unblock board
+  // Increment counter
+// Return valid
+
+MediocrePlayer::auxPlaceShips
+// Base Case 1: If no more ships left
+  // return true
+// If c exceeds game columns
+  // Set c to 0 and increment r
+// Base Case 2: If r exceeds game rows
+  // Start backtracking
+// Base Case 3: If no more ships to unplace and backtracking
+  // Return false
+// If not backtracking
+  // place ship horizontally and set valid to result
+  // If valid
+    // Add point of placement to storage vector
+    // Add direction of placement to storage vector
+    // Recursively call auxPlaceShips with adjusted parameters
+  // Else ship could not be placed horizontally
+    // place ship vertically and set valid to result
+    // If valid
+      // Add point of placement to storage vector
+      // Add direction of placement to storage vector
+      // Recursively call auxPlaceShips with adjusted parameters
+    // Else ship could not be placed vertically
+      // Recursively call auxPlaceShips with adjusted parameters
+// Else backtracking
+  // Get row and column of last added ship
+  // Get direction of last added ship
+  // Remove point and direction from storage vectors
+  // Set backtrack to false
+  // Recursively call auxPlaceShips with adjusted parameters
+
+MediocrePlayer::recommendAttack
+// If in state 1
+  // Randomly select one of the remaining points to attack
+  // Remove selected point from remaining points to attack
+  // Return point
+// Else in state 2
+  // Randomly select point from calculated shots
+  // Remove point from calculated shots
+  // Return point
+
+MediocrePlayer::recordAttackResult
+// Mark board with a hit or miss depending on shot
+// If in state 1
+  // If shot hit and ship was not destroyed
+    // set state to 2
+    // Record last cell hit
+    // Add calculated points
+// Else in state 2
+  // If shot hit and ship destroyed
+    // set state to 1
+
+GoodPlayer::placeShips
+// While ships left to place
+  // Select random point for placement
+  // place ship horizontally and set valid to result
+  // If !valid
+    // place ship vertically and set valid to result
+    // If valid
+      // remove point from remaining points
+      // Decrement ships left
+      // Increment ship id
+// Clear and reinitialize points left on the board
+// Return true
+
+GoodPlayer::recommendAttack
+// If in state 1
+  // Randomly select point to attack
+  // Remove point from remaining attacks
+  // Return point
+// Else in state 2
+  // Select point to attack from top of stack
+  // Remove point from stack
+  // Return point
+
+GoodPlayer::recordAttackResult
+// If shot hit
+  // mark m_hist with hit
+  // Add points to attack to stack
+// Else shot missed
+  // mark m_hist with miss
+// If in state 1
+  // If shot hit
+    // set state to 2
+// Else in state 2
+  // If stack is empty
+    // Set state to 1

@@ -23,23 +23,9 @@ bool addStandardShips(Game& g)
     g.addShip(2, 'P', "patrol boat");
 }
 
-//int main()
-//{
-//    Game g(10, 10);
-////    g.addShip(5, 'A', "aircraft carrier");
-////    g.addShip(2, 'L', "latrol boat");
-////    g.addShip(3, 'S', "submarine");
-//    addStandardShips(g);
-//    Player* p1 = createPlayer("good", "Conman", g);
-//    Player* p2 = createPlayer("mediocre", "Tanman", g);
-//    if (g.play(p1, p2, false) == nullptr) cout << "worked" << endl;
-//    delete p1;
-//    delete p2;
-//}
-
 int main()
 {
-    const int NTRIALS = 1000;
+    const int NTRIALS = 100;
     
     cout << "Select one of these choices for an example of the game:" << endl;
     cout << "  1.  A mini-game between two mediocre players" << endl;
@@ -83,10 +69,8 @@ int main()
         {
             cout << "============================= Game " << k
             << " =============================" << endl;
-            Game g(2, 3);
-            g.addShip(2, 'R', "rowboat");
-//            Game g(10, 10);
-//            addStandardShips(g);
+            Game g(10, 10);
+            addStandardShips(g);
             Player* p1 = createPlayer("good", "Good Audrey", g);
             Player* p2 = createPlayer("mediocre", "Mediocre Mimi", g);
             Player* winner = (k % 2 == 1 ?

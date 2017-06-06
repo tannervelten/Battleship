@@ -5,7 +5,6 @@
 #include <iostream>
 #include <string>
 #include <stack>
-#include <stdlib.h>
 
 using namespace std;
 
@@ -429,11 +428,6 @@ void MediocrePlayer::recordAttackResult(Point p, bool validShot, bool shotHit, b
     // Switch to state 2 if shot hit but ship was not destroyed
     if (m_state == 1)
     {
-//        if (shotHit)
-//            m_hist[p.r][p.c] = 'X';
-//        else
-//            m_hist[p.r][p.c] = 'o';
-        
         if (shotHit && !shipDestroyed)
         {
             m_state = 2;
@@ -444,11 +438,6 @@ void MediocrePlayer::recordAttackResult(Point p, bool validShot, bool shotHit, b
     // Switch to state 1 if shot hit and ship was destroyed
     else // state 2
     {
-//        if (shotHit)
-//            m_hist[p.r][p.c] = 'X';
-//        else
-//            m_hist[p.r][p.c] = 'o';
-        
         if (shotHit && shipDestroyed)
             m_state = 1;
     }
@@ -559,7 +548,6 @@ GoodPlayer::GoodPlayer(string nm, const Game& g)
 bool GoodPlayer::placeShips(Board& b)
 {
     int id = 0;
-    Direction dir;
     bool valid;
     int shipsLeft = game().nShips();
     while (shipsLeft > 0)
@@ -610,7 +598,7 @@ Point GoodPlayer::recommendAttack()
             attack = m_attackPoints.top();
         // Make sure stack is not empty
         else
-            cerr << "Error GoodPlayer::reccomendAttack -- stack should not be empty" << endl;
+            cerr << "Error GoodPlayer::recomendAttack -- stack should not be empty" << endl;
         m_attackPoints.pop();
         // Remove the selected point from points remaining
         removePoint(attack, m_points);
